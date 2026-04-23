@@ -23,12 +23,14 @@ Both `output.py` and `output.c` produce identical computational results when exe
 
 The MiniLang compiler currently supports:
 *   **Variable declaration:** `let x = 10`
+*   **Reassignment:** `x = x + 1`
 *   **Arithmetic operations:** `let z = x + y * 2`
 *   **Comparisons:** `>`, `<`, `>=`, `<=`, `==`, `!=`
 *   **Control Flow (If/Else):** `if z > 30 { ... } else { ... }`
 *   **Loops:** `loop i from 1 to 5 { ... }`
 *   **Console Output:** `print x`
 *   **Comments:** `# this is a comment`
+*   **IR Optimization (middle-end):** constant folding, copy propagation, dead temporary elimination, jump simplification
 
 ### Example MiniLang Program
 ```swift
@@ -36,10 +38,11 @@ The MiniLang compiler currently supports:
 let x = 10
 let y = 20
 let z = x + y * 2
+let result = 0
 if z > 30 {
-    let result = 1
+    result = 1
 } else {
-    let result = 0
+    result = 0
 }
 
 print result
@@ -80,6 +83,8 @@ To clear out the automatically generated source files and previously compiled co
 ## Running and Using the Compiler
 
 To use the compiler, pass any valid `.ml` source file as an argument. The compiler will ingest the source code, display the 3-address Intermediate Representation (IR), and automatically generate the two target backend outputs (`output.py` and `output.c`) right in your current directory.
+
+The compiler prints both the unoptimized IR (`=== IR ===`) and the optimized IR (`=== Optimized IR ===`), and the generated backends are emitted from the optimized IR.
 
 ### On Windows (PowerShell)
 ```powershell
@@ -123,5 +128,6 @@ minilang/
     ├── test2.ml         # Focus: Simple loops and accumulation
     ├── test3.ml         # Focus: Nested branching
     ├── test4.ml         # Focus: Operator precedence
-    └── test5.ml         # Focus: Loops combined with internal branching
+    ├── test5.ml         # Focus: Loops combined with internal branching
+    └── test6.ml         # Focus: Copy-propagation correctness
 ```
