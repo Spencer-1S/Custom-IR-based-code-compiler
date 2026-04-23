@@ -20,7 +20,7 @@ void yyerror(const char *msg) {
     StmtList *stmtlist;
 }
 
-%token LET IF ELSE LOOP FROM TO
+%token LET IF ELSE LOOP FROM TO PRINT
 %token LBRACE RBRACE ASSIGN
 %token PLUS MINUS MUL DIV
 %token GT LT GTE LTE EQ NEQ
@@ -60,6 +60,9 @@ stmt:
 
   | LOOP IDENT FROM expr TO expr LBRACE block RBRACE
         { $$ = make_loop($2, $4, $6, $8); }
+
+  | PRINT expr
+        { $$ = make_print($2); }
   ;
 
 block:

@@ -16,6 +16,7 @@
 "loop"                   { return LOOP;   }
 "from"                   { return FROM;   }
 "to"                     { return TO;     }
+"print"                  { return PRINT;  }
 
 [0-9]+                   { yylval.ival = atoi(yytext); return NUMBER; }
 [a-zA-Z_][a-zA-Z0-9_]*  { yylval.sval = strdup(yytext); return IDENT; }

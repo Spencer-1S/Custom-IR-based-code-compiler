@@ -5,10 +5,11 @@ y = 20
 t0 = y * 2
 t1 = x + t0
 z = t1
-t2 = z > 30
+t2 = z <= 30
 if not t2: pass  # goto L0
 result = 1
 # goto L1
 # label: L0
 result = 0
 # label: L1
+print(result)

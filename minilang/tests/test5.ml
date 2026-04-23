@@ -6,3 +6,5 @@ loop i from 1 to 10 {
         let total = total + 0
     }
 }
+
+print total

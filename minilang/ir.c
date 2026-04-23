@@ -69,6 +69,13 @@ Stmt *make_loop(char *var, Expr *start, Expr *end, StmtList *body) {
     s->next  = NULL;
     return s;
 }
+Stmt *make_print(Expr *val) {
+    Stmt *s = malloc(sizeof(Stmt));
+    s->kind = STMT_PRINT;
+    s->expr = val;
+    s->next = NULL;
+    return s;
+}
 StmtList *make_stmtlist(Stmt *s) {
     StmtList *l = malloc(sizeof(StmtList));
     l->head = l->tail = s;
@@ -150,6 +157,10 @@ static void gen_stmt(Stmt *s) {
         emit("ASSIGN", s->name,  inc,      NULL);
         emit("JUMP",   l_start,  NULL,     NULL);
         emit("LABEL",  l_end,    NULL,     NULL);
+    }
+    else if (s->kind == STMT_PRINT) {
+        char *val = gen_expr(s->expr);
+        emit("PRINT", NULL, val, NULL);
     }
 }
 

@@ -60,21 +60,22 @@ extern int yydebug;
     LOOP = 261,                    /* LOOP  */
     FROM = 262,                    /* FROM  */
     TO = 263,                      /* TO  */
-    LBRACE = 264,                  /* LBRACE  */
-    RBRACE = 265,                  /* RBRACE  */
-    ASSIGN = 266,                  /* ASSIGN  */
-    PLUS = 267,                    /* PLUS  */
-    MINUS = 268,                   /* MINUS  */
-    MUL = 269,                     /* MUL  */
-    DIV = 270,                     /* DIV  */
-    GT = 271,                      /* GT  */
-    LT = 272,                      /* LT  */
-    GTE = 273,                     /* GTE  */
-    LTE = 274,                     /* LTE  */
-    EQ = 275,                      /* EQ  */
-    NEQ = 276,                     /* NEQ  */
-    NUMBER = 277,                  /* NUMBER  */
-    IDENT = 278                    /* IDENT  */
+    PRINT = 264,                   /* PRINT  */
+    LBRACE = 265,                  /* LBRACE  */
+    RBRACE = 266,                  /* RBRACE  */
+    ASSIGN = 267,                  /* ASSIGN  */
+    PLUS = 268,                    /* PLUS  */
+    MINUS = 269,                   /* MINUS  */
+    MUL = 270,                     /* MUL  */
+    DIV = 271,                     /* DIV  */
+    GT = 272,                      /* GT  */
+    LT = 273,                      /* LT  */
+    GTE = 274,                     /* GTE  */
+    LTE = 275,                     /* LTE  */
+    EQ = 276,                      /* EQ  */
+    NEQ = 277,                     /* NEQ  */
+    NUMBER = 278,                  /* NUMBER  */
+    IDENT = 279                    /* IDENT  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -91,7 +92,7 @@ union YYSTYPE
     Stmt     *stmt;
     StmtList *stmtlist;
 
-#line 95 "parser.tab.h"
+#line 96 "parser.tab.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

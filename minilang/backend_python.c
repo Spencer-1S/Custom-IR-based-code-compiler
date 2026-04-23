@@ -21,6 +21,7 @@ void emit_python(IRInstr *ir) {
         else if (!strcmp(i->op,"JUMPF"))  fprintf(f, "if not %s: pass  # goto %s\n", i->src1, i->dest);
         else if (!strcmp(i->op,"JUMP"))   fprintf(f, "# goto %s\n",         i->dest);
         else if (!strcmp(i->op,"LABEL"))  fprintf(f, "# label: %s\n",       i->dest);
+        else if (!strcmp(i->op,"PRINT"))  fprintf(f, "print(%s)\n",         i->src1);
     }
 
     fclose(f);

@@ -21,6 +21,7 @@ void emit_c(IRInstr *ir) {
         else if (!strcmp(i->op,"JUMPF"))  fprintf(f, "    if (!%s) goto %s;\n",      i->src1, i->dest);
         else if (!strcmp(i->op,"JUMP"))   fprintf(f, "    goto %s;\n",               i->dest);
         else if (!strcmp(i->op,"LABEL"))  fprintf(f, "%s:;\n",                       i->dest);
+        else if (!strcmp(i->op,"PRINT"))  fprintf(f, "    printf(\"%%d\\n\", %s);\n", i->src1);
     }
 
     fprintf(f, "    return 0;\n}\n");

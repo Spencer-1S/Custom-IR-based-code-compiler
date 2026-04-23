@@ -10,3 +10,6 @@ if bigger > 12 {
 } else {
     let category = 0
 }
+
+print bigger
+print category
