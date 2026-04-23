@@ -1,44 +1,48 @@
-# MiniLang: Custom IR-Based Code Compiler
+# MiniLang Compiler
 
-MiniLang is a custom compiler built from scratch for a university compilers course. It takes a specialized functional/imperative programming language and compiles it down to a custom 3-address Intermediate Representation (IR). From this single unified IR, the compiler can generate fully executable code across multiple backend targets: **Python** and **C**.
+MiniLang is a small, educational compiler implemented in C using Flex and Bison. It parses a simple, integer-only imperative language, lowers it to a 3-address code (3AC) Intermediate Representation (IR), runs a classic middle-end optimization pipeline, and then emits equivalent programs in two backends:
 
-### Research Inspiration
-This project demonstrates the core conceptual architecture discussed in recent academic research, explicitly acting as a small-scale model for the idea that **Intermediate Representations act as a universal bridge for robust cross-language code translation**:
-1. *"IRCoder: Intermediate Representations Make Language Models Robust Multilingual Code Generators"* — Paul et al. (ACL 2024)
-2. *"Code Translation with Compiler Representations"* — Szafraniec et al. (ICLR 2023)
-3. *"Can Large Language Models Understand Intermediate Representations in Compilers?"* (arXiv 2025)
+- `output.py` (Python interpreter over IR)
+- `output.c` (C code generated from IR)
 
----
+The compiler also prints both the unoptimized IR (`=== IR ===`) and optimized IR (`=== Optimized IR ===`). Code generation is performed from the optimized IR.
 
-## Architecture Pipeline
+## Pipeline
 
-The compiler's translation pipeline is as follows:
-`MiniLang Source` -> `Flex (Lexer)` -> `Bison (Parser)` -> `AST (Abstract Syntax Tree)` -> `3-Address IR` -> `Python Backend` & `C Backend`
+`MiniLang (.ml)` → `lexer (Flex)` → `parser (Bison)` → `AST` → `3AC IR` → `IR optimizer` → `Python backend + C backend`
 
-Both `output.py` and `output.c` produce identical computational results when executed. This empirically verifies that the 3-address IR serves as a correct, complete representation of the original source's semantics regardless of the output language.
+## Language Summary
 
----
+MiniLang programs consist of statements with block-structured control flow.
 
-## Features Supported
+### Supported Constructs
 
-The MiniLang compiler currently supports:
-*   **Variable declaration:** `let x = 10`
-*   **Reassignment:** `x = x + 1`
-*   **Arithmetic operations:** `let z = x + y * 2`
-*   **Comparisons:** `>`, `<`, `>=`, `<=`, `==`, `!=`
-*   **Control Flow (If/Else):** `if z > 30 { ... } else { ... }`
-*   **Loops:** `loop i from 1 to 5 { ... }`
-*   **Console Output:** `print x`
-*   **Comments:** `# this is a comment`
-*   **IR Optimization (middle-end):** constant folding, copy propagation, dead temporary elimination, jump simplification
+- Variable declaration: `let x = 10`
+- Reassignment: `x = x + 1` (assignment to an undeclared variable is a compile-time error)
+- Integer arithmetic: `+ - * /`
+- Comparisons: `> < >= <= == !=` (results are `0` or `1`)
+- If/else blocks:
+  - `if cond { ... } else { ... }`
+- Counted loops:
+  - `loop i from 1 to 5 { ... }` (inclusive)
+- Output: `print expr`
+- Comments: lines beginning with `#`
 
-### Example MiniLang Program
-```swift
-# test1.ml
+### Scoping Rules (Enforced at Compile-Time)
+
+- Blocks introduce a new scope.
+- Using a variable outside of its scope (or before declaration) is a compile-time error.
+- Redeclaration within the same scope is ignored (no duplicate symbol entry).
+
+### Example Program
+
+```text
+# Example
 let x = 10
 let y = 20
 let z = x + y * 2
 let result = 0
+
 if z > 30 {
     result = 1
 } else {
@@ -48,86 +52,98 @@ if z > 30 {
 print result
 ```
 
----
+## IR and Optimizations
 
-## Setup & Installation
+The IR is a simple 3-address instruction list (e.g., `ASSIGN`, `ADD`, `LTE`, `JUMP`, `JUMPF`, `LABEL`, `PRINT`).
 
-This project relies on standard Unix compilation tools (`make`, `flex`, `bison`, `gcc`). On Windows, **Windows Subsystem for Linux (WSL)** is the recommended development environment.
+The optimizer in `minilang/ir.c` performs conservative, basic-block-local optimizations:
+
+- Constant propagation and constant folding
+- Copy propagation (with correct invalidation on reassignment)
+- Algebraic simplifications (e.g., `x + 0`, `x * 1`, `0 * x`)
+- Dead temporary elimination (removes unused `tN` temps)
+- Simple jump cleanup (removes `JUMP` to the immediately-next `LABEL`, removes unreachable instructions after unconditional jumps until next label)
+
+Note: The project is intended for coursework and demonstration. The Python backend uses `//` for integer division; for negative operands this may differ from C’s truncation behavior.
+
+## Build (Recommended: WSL on Windows)
+
+This project uses common Unix build tools (`make`, `flex`, `bison`, `gcc`). On Windows, building via WSL is the simplest path.
 
 ### Prerequisites (Ubuntu / WSL)
-Install the required packages along with the MinGW cross-compiler to generate Windows `.exe` files:
+
 ```bash
 sudo apt update
 sudo apt install build-essential flex bison python3 mingw-w64
 ```
 
----
+### Build Steps
 
-## Generating the Compiler
+From the repository root:
 
-1. Open your terminal (or WSL on Windows).
-2. Navigate to the `minilang/` directory.
-3. Run the following make command to build the project components (Lexical analyzer, Parser, and IR builder) completely automatically:
 ```bash
+cd minilang
+make clean
 make
 ```
 
-The Makefile is explicitly configured to compile binaries for multiple operating systems, yielding two output executables in separate folders:
-*   **Linux version:** Found at `linux/minilang.out`
-*   **Windows version:** Found at `windows/minilang.exe` (cross-compiled via MinGW)
+Artifacts:
 
-To clear out the automatically generated source files and previously compiled compilers, run `make clean`.
+- Linux/WSL compiler: `minilang/linux/minilang.out`
+- Windows compiler (cross-compiled): `minilang/windows/minilang.exe`
 
----
+## Run
 
-## Running and Using the Compiler
+The compiler takes a `.ml` program path and generates `output.py` and `output.c` in the current working directory.
 
-To use the compiler, pass any valid `.ml` source file as an argument. The compiler will ingest the source code, display the 3-address Intermediate Representation (IR), and automatically generate the two target backend outputs (`output.py` and `output.c`) right in your current directory.
+### Linux / WSL
 
-The compiler prints both the unoptimized IR (`=== IR ===`) and the optimized IR (`=== Optimized IR ===`), and the generated backends are emitted from the optimized IR.
-
-### On Windows (PowerShell)
-```powershell
-# 1. Provide a MiniLang source file to your compiled executable
-.\windows\minilang.exe tests\test1.ml
-
-# 2. To verify the generation, execute the produced Python output
-python output.py
-```
-
-### On Linux / WSL (Bash)
 ```bash
-# 1. Provide a MiniLang source file to your compiled executable
+cd minilang
 ./linux/minilang.out tests/test1.ml
 
-# 2. Execute the produced Python backend output
 python3 output.py
 
-# 3. Compile and execute the produced C backend output
 gcc output.c -o result
 ./result
 ```
 
-Both backend outputs will yield the exact same printed results (validating the IR logic) without throwing any syntax or scoping errors.
+### Windows (PowerShell)
 
----
+Build the project in WSL first (so `windows/minilang.exe` exists), then run:
 
-## Project Structure
+```powershell
+cd minilang
+.\windows\minilang.exe tests\test1.ml
+
+python output.py
+
+cl output.c   # optional if you have MSVC installed
+```
+
+## Tests
+
+Test programs live in `minilang/tests/`.
+
+- `test1.ml`–`test5.ml` cover arithmetic, branching, and loops.
+- `test6.ml` is a regression test for copy-propagation correctness.
+
+## Repository Layout
 
 ```text
 minilang/
-├── Makefile             # Multi-target build configuration
-├── lexer.l              # Flex lexical analyzer definitions
-├── parser.y             # Bison grammar parsing & AST construction
-├── ir.h                 # AST node types and IR instruction definitions
-├── ir.c                 # IR generator (The core logic mapping AST to IR)
-├── backend_python.c     # Emits 'output.py' from semantic IR
-├── backend_c.c          # Emits 'output.c' from semantic IR
-└── tests/               # MiniLang test suites
-    ├── test1.ml         # Focus: Basic arithmetic and if/else
-    ├── test2.ml         # Focus: Simple loops and accumulation
-    ├── test3.ml         # Focus: Nested branching
-    ├── test4.ml         # Focus: Operator precedence
-    ├── test5.ml         # Focus: Loops combined with internal branching
-    └── test6.ml         # Focus: Copy-propagation correctness
+├── Makefile
+├── lexer.l
+├── parser.y
+├── ir.h
+├── ir.c
+├── backend_python.c
+├── backend_c.c
+└── tests/
+    ├── test1.ml
+    ├── test2.ml
+    ├── test3.ml
+    ├── test4.ml
+    ├── test5.ml
+    └── test6.ml
 ```
