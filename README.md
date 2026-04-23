@@ -2,7 +2,7 @@
 
 MiniLang is a small, educational compiler implemented in C using Flex and Bison. It parses a simple, integer-only imperative language, lowers it to a 3-address code (3AC) Intermediate Representation (IR), runs a classic middle-end optimization pipeline, and then emits equivalent programs in two backends:
 
-- `output.py` (Python interpreter over IR)
+- `output.py` (Python interpreter over IR)    
 - `output.c` (C code generated from IR)
 
 The compiler also prints both the unoptimized IR (`=== IR ===`) and optimized IR (`=== Optimized IR ===`). Code generation is performed from the optimized IR.
