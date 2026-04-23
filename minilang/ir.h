@@ -11,7 +11,7 @@ typedef struct Expr {
 } Expr;
 
 typedef struct Stmt {
-    enum { STMT_ASSIGN, STMT_IF, STMT_LOOP, STMT_PRINT } kind;
+    enum { STMT_ASSIGN, STMT_SET, STMT_IF, STMT_LOOP, STMT_PRINT } kind;
     char            *name;
     Expr            *expr;
     struct StmtList *then_body, *else_body, *body;
@@ -36,6 +36,7 @@ Expr     *make_num(int val);
 Expr     *make_var(char *name);
 Expr     *make_binop(char *op, Expr *l, Expr *r);
 Stmt     *make_assign(char *name, Expr *val);
+Stmt     *make_set(char *name, Expr *val);
 Stmt     *make_if(Expr *cond, StmtList *then, StmtList *els);
 Stmt     *make_loop(char *var, Expr *start, Expr *end, StmtList *body);
 Stmt     *make_print(Expr *val);

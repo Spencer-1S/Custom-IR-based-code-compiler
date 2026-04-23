@@ -1,14 +1,16 @@
 let a = 15
 let b = 10
+let bigger = 0
 if a > b {
-    let bigger = a
+    bigger = a
 } else {
-    let bigger = b
+    bigger = b
 }
+let category = 0
 if bigger > 12 {
-    let category = 1
+    category = 1
 } else {
-    let category = 0
+    category = 0
 }
 
 print bigger

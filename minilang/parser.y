@@ -52,6 +52,9 @@ stmt:
     LET IDENT ASSIGN expr
         { $$ = make_assign($2, $4); }
 
+  | IDENT ASSIGN expr
+      { $$ = make_set($1, $3); }
+
   | IF expr LBRACE block RBRACE
         { $$ = make_if($2, $4, NULL); }
 

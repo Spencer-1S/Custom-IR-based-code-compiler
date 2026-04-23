@@ -30,6 +30,52 @@ static void emit(char *op, char *dest, char *src1, char *src2) {
     else { ir_tail->next = i; ir_tail = i; }
 }
 
+/* ── Semantic Scoping ── */
+typedef struct Symbol {
+    char *name;
+    struct Symbol *next;
+} Symbol;
+
+typedef struct Scope {
+    Symbol *syms;
+    struct Scope *parent;
+} Scope;
+
+static Scope *current_scope = NULL;
+
+static void push_scope() {
+    Scope *s = malloc(sizeof(Scope));
+    s->syms = NULL;
+    s->parent = current_scope;
+    current_scope = s;
+}
+
+static void pop_scope() {
+    if (current_scope) {
+        current_scope = current_scope->parent;
+    }
+}
+
+static void add_symbol(char *name) {
+    if (!current_scope) return;
+    for (Symbol *sym = current_scope->syms; sym; sym = sym->next) {
+        if (!strcmp(sym->name, name)) return;
+    }
+    Symbol *sym = malloc(sizeof(Symbol));
+    sym->name = strdup(name);
+    sym->next = current_scope->syms;
+    current_scope->syms = sym;
+}
+
+static int check_symbol(char *name) {
+    for (Scope *s = current_scope; s; s = s->parent) {
+        for (Symbol *sym = s->syms; sym; sym = sym->next) {
+            if (!strcmp(sym->name, name)) return 1;
+        }
+    }
+    return 0;
+}
+
 /* ── AST node builders ── */
 Expr *make_num(int val) {
     Expr *e = malloc(sizeof(Expr));
@@ -51,6 +97,14 @@ Stmt *make_assign(char *name, Expr *val) {
     Stmt *s = malloc(sizeof(Stmt));
     s->kind = STMT_ASSIGN;
     s->name = strdup(name); s->expr = val;
+    s->next = NULL;
+    return s;
+}
+Stmt *make_set(char *name, Expr *val) {
+    Stmt *s = malloc(sizeof(Stmt));
+    s->kind = STMT_SET;
+    s->name = strdup(name);
+    s->expr = val;
     s->next = NULL;
     return s;
 }
@@ -94,7 +148,13 @@ static char *gen_expr(Expr *e) {
         sprintf(buf, "%d", e->ival);
         return buf;
     }
-    if (e->kind == EXPR_VAR) return strdup(e->sval);
+    if (e->kind == EXPR_VAR) {
+        if (!check_symbol(e->sval)) {
+            fprintf(stderr, "Semantic Error: Variable '%s' is accessed outside of its scope or undeclared.\n", e->sval);
+            exit(1);
+        }
+        return strdup(e->sval);
+    }
 
     char *l = gen_expr(e->left);
     char *r = gen_expr(e->right);
@@ -128,6 +188,15 @@ static void gen_stmtlist(StmtList *list) {
 static void gen_stmt(Stmt *s) {
     if (s->kind == STMT_ASSIGN) {
         char *src = gen_expr(s->expr);
+        add_symbol(s->name);
+        emit("ASSIGN", s->name, src, NULL);
+    }
+    else if (s->kind == STMT_SET) {
+        if (!check_symbol(s->name)) {
+            fprintf(stderr, "Semantic Error: Assignment to undeclared variable '%s'.\n", s->name);
+            exit(1);
+        }
+        char *src = gen_expr(s->expr);
         emit("ASSIGN", s->name, src, NULL);
     }
     else if (s->kind == STMT_IF) {
@@ -135,28 +204,43 @@ static void gen_stmt(Stmt *s) {
         char *l_else = new_label();
         char *l_end  = new_label();
         emit("JUMPF",  l_else, cond,   NULL);
+        
+        push_scope();
         gen_stmtlist(s->then_body);
+        pop_scope();
+        
         emit("JUMP",   l_end,  NULL,   NULL);
         emit("LABEL",  l_else, NULL,   NULL);
+        
+        push_scope();
         gen_stmtlist(s->else_body);
+        pop_scope();
+        
         emit("LABEL",  l_end,  NULL,   NULL);
     }
     else if (s->kind == STMT_LOOP) {
         char *start   = gen_expr(s->start);
         char *l_start = new_label();
         char *l_end   = new_label();
+        
+        push_scope();
+        add_symbol(s->name);
         emit("ASSIGN", s->name,   start,   NULL);
         emit("LABEL",  l_start,   NULL,    NULL);
         char *limit = gen_expr(s->end);
         char *cond  = new_temp();
         emit("LTE",    cond,     s->name,  limit);
         emit("JUMPF",  l_end,    cond,     NULL);
+        
         gen_stmtlist(s->body);
+        
         char *inc = new_temp();
         emit("ADD",    inc,      s->name,  "1");
         emit("ASSIGN", s->name,  inc,      NULL);
         emit("JUMP",   l_start,  NULL,     NULL);
         emit("LABEL",  l_end,    NULL,     NULL);
+        
+        pop_scope();
     }
     else if (s->kind == STMT_PRINT) {
         char *val = gen_expr(s->expr);
@@ -165,7 +249,9 @@ static void gen_stmt(Stmt *s) {
 }
 
 void generate_ir(StmtList *stmts) {
+    push_scope(); // Global scope
     gen_stmtlist(stmts);
+    pop_scope();
 
     printf("\n=== IR ===\n");
     for (IRInstr *i = ir_head; i; i = i->next) {
